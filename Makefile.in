@@ -44,6 +44,7 @@ all : $(TARGET)
 
 websocket.$(SOEXT): $(websocket_SRCS)
 	$(GAUCHE_PACKAGE) compile \
+	  --libs="-lwebsockets" \
 	  --local=$(LOCAL_PATHS) --verbose websocket $(websocket_SRCS)
 
 check : all

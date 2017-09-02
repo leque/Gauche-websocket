@@ -6,12 +6,106 @@
 #include \"websocket.h\"
 "
 
-;; The following entry is a dummy one.
-;; Replace it for your definitions.
+(define-type <websocket-client> "gwebsocket_client*" "websocket-client"
+  "WSCLIENT_P" "WSCLIENT_UNBOX" "WSCLIENT_BOX")
 
-(define-cproc test-websocket () ::<const-cstring>
-  (result "websocket is working"))
+;;; enum lws_callback_reasons {
+(define-enum LWS_CALLBACK_ESTABLISHED)
+(define-enum LWS_CALLBACK_CLIENT_CONNECTION_ERROR)
+(define-enum LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH)
+(define-enum LWS_CALLBACK_CLIENT_ESTABLISHED)
+(define-enum LWS_CALLBACK_CLOSED)
+(define-enum LWS_CALLBACK_CLOSED_HTTP)
+(define-enum LWS_CALLBACK_RECEIVE)
+(define-enum LWS_CALLBACK_RECEIVE_PONG)
+(define-enum LWS_CALLBACK_CLIENT_RECEIVE)
+(define-enum LWS_CALLBACK_CLIENT_RECEIVE_PONG)
+(define-enum LWS_CALLBACK_CLIENT_WRITEABLE)
+(define-enum LWS_CALLBACK_SERVER_WRITEABLE)
+(define-enum LWS_CALLBACK_HTTP)
+(define-enum LWS_CALLBACK_HTTP_BODY)
+(define-enum LWS_CALLBACK_HTTP_BODY_COMPLETION)
+(define-enum LWS_CALLBACK_HTTP_FILE_COMPLETION)
+(define-enum LWS_CALLBACK_HTTP_WRITEABLE)
+(define-enum LWS_CALLBACK_FILTER_NETWORK_CONNECTION)
+(define-enum LWS_CALLBACK_FILTER_HTTP_CONNECTION)
+(define-enum LWS_CALLBACK_SERVER_NEW_CLIENT_INSTANTIATED)
+(define-enum LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION)
+(define-enum LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS)
+(define-enum LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS)
+(define-enum LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION)
+(define-enum LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER)
+(define-enum LWS_CALLBACK_CONFIRM_EXTENSION_OKAY)
+(define-enum LWS_CALLBACK_CLIENT_CONFIRM_EXTENSION_SUPPORTED)
+(define-enum LWS_CALLBACK_PROTOCOL_INIT)
+(define-enum LWS_CALLBACK_PROTOCOL_DESTROY)
+(define-enum LWS_CALLBACK_WSI_CREATE)
+(define-enum LWS_CALLBACK_WSI_DESTROY)
+(define-enum LWS_CALLBACK_GET_THREAD_ID)
+(define-enum LWS_CALLBACK_ADD_POLL_FD)
+(define-enum LWS_CALLBACK_DEL_POLL_FD)
+(define-enum LWS_CALLBACK_CHANGE_MODE_POLL_FD)
+(define-enum LWS_CALLBACK_LOCK_POLL)
+(define-enum LWS_CALLBACK_UNLOCK_POLL)
+(define-enum LWS_CALLBACK_OPENSSL_CONTEXT_REQUIRES_PRIVATE_KEY)
+(define-enum LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
+(define-enum LWS_CALLBACK_WS_EXT_DEFAULTS)
+(define-enum LWS_CALLBACK_CGI)
+(define-enum LWS_CALLBACK_CGI_TERMINATED)
+(define-enum LWS_CALLBACK_CGI_STDIN_DATA)
+(define-enum LWS_CALLBACK_CGI_STDIN_COMPLETED)
+(define-enum LWS_CALLBACK_ESTABLISHED_CLIENT_HTTP)
+(define-enum LWS_CALLBACK_CLOSED_CLIENT_HTTP)
+(define-enum LWS_CALLBACK_RECEIVE_CLIENT_HTTP)
+(define-enum LWS_CALLBACK_COMPLETED_CLIENT_HTTP)
+(define-enum LWS_CALLBACK_RECEIVE_CLIENT_HTTP_READ)
+(define-enum LWS_CALLBACK_HTTP_BIND_PROTOCOL)
+(define-enum LWS_CALLBACK_HTTP_DROP_PROTOCOL)
+(define-enum LWS_CALLBACK_CHECK_ACCESS_RIGHTS)
+(define-enum LWS_CALLBACK_PROCESS_HTML)
+(define-enum LWS_CALLBACK_ADD_HEADERS)
+(define-enum LWS_CALLBACK_SESSION_INFO)
+(define-enum LWS_CALLBACK_GS_EVENT)
+(define-enum LWS_CALLBACK_HTTP_PMO)
+(define-enum LWS_CALLBACK_CLIENT_HTTP_WRITEABLE)
+(define-enum LWS_CALLBACK_OPENSSL_PERFORM_SERVER_CERT_VERIFICATION)
+(define-enum LWS_CALLBACK_RAW_RX)
+(define-enum LWS_CALLBACK_RAW_CLOSE)
+(define-enum LWS_CALLBACK_RAW_WRITEABLE)
+(define-enum LWS_CALLBACK_RAW_ADOPT)
+(define-enum LWS_CALLBACK_RAW_ADOPT_FILE)
+(define-enum LWS_CALLBACK_RAW_RX_FILE)
+(define-enum LWS_CALLBACK_RAW_WRITEABLE_FILE)
+(define-enum LWS_CALLBACK_RAW_CLOSE_FILE)
+(define-enum LWS_CALLBACK_USER)
+;;; }
 
+(define-cproc %make-websocket-client (address::<const-cstring>
+                                      port::<int>
+                                      ssl_connection::<int>
+                                      path::<const-cstring>
+                                      host::<const-cstring>
+                                      origin::<const-cstring>
+                                      callback::<top>)
+              ::<websocket-client>
+  (return (make_websocket_client address
+                                 port
+                                 ssl_connection
+                                 path
+                                 host
+                                 origin
+                                 callback)))
+
+(define-cproc %websocket-client-connect (ws::<websocket-client>) ::<void>
+  (gwebsocket_client_connect ws))
+
+(define-cproc websocket-client-service (ws::<websocket-client> timeout::<int>)
+              ::<int>
+  (lws_service (ref (-> ws ccinfo) context)
+               timeout))
+
+(define-cproc websocket-client-write (ws::<websocket-client> msg) ::<int>
+  (gwebsocket_client_write ws msg))
 
 ;; Local variables:
 ;; mode: scheme
