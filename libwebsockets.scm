@@ -31,7 +31,14 @@
            (warn "unhandled callback:" reason)))
     0))
 
-(define (make-websocket-client url :key on-open on-close on-message on-writable on-error)
+(define (make-websocket-client url
+                               :key
+                               (headers '())
+                               on-open
+                               on-close
+                               on-message
+                               on-writable
+                               on-error)
   (receive (scheme _usr-info host port path query fragment)
       (uri-parse url)
     (let ((secure (cond
@@ -50,5 +57,6 @@
                                        path
                                        host
                                        ""
-                                       callback)
+                                       callback
+                                       headers)
         (%websocket-client-connect c)))))

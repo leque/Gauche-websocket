@@ -86,7 +86,8 @@
                                       path::<const-cstring>
                                       host::<const-cstring>
                                       origin::<const-cstring>
-                                      callback::<top>)
+                                      callback::<top>
+                                      headers::<list>)
               ::<websocket-client>
   (return (make_websocket_client address
                                  port
@@ -94,7 +95,8 @@
                                  path
                                  host
                                  origin
-                                 callback)))
+                                 callback
+                                 headers)))
 
 (define-cproc %websocket-client-connect (ws::<websocket-client>) ::<void>
   (gwebsocket_client_connect ws))

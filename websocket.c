@@ -7,6 +7,7 @@
 ScmClass *WsClientClass;
 
 static ScmObj callback_sym;
+static ScmObj headers_sym;
 
 static int
 gauche_dispatch_websocket(
@@ -18,7 +19,6 @@ gauche_dispatch_websocket(
 {
     switch (reason) {
     case LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH:
-    case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
     case LWS_CALLBACK_WSI_CREATE:
     case LWS_CALLBACK_WSI_DESTROY:
     case LWS_CALLBACK_GET_THREAD_ID:
@@ -29,6 +29,32 @@ gauche_dispatch_websocket(
     case LWS_CALLBACK_UNLOCK_POLL:
         // ignore
         break;
+    case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER: {
+        gwebsocket_client *ws =
+            (gwebsocket_client *)lws_get_protocol(wsi)->user;
+        ScmObj obj = WSCLIENT_BOX(ws);
+        ScmObj headers = Scm_ForeignPointerAttrGet(
+            SCM_FOREIGN_POINTER(obj), headers_sym, SCM_NIL);
+        unsigned char **p = (unsigned char **)in;
+        unsigned char *end = (*p) + len;
+        SCM_FOR_EACH(headers, headers)
+        {
+            ScmObj key = SCM_CAAR(headers);
+            ScmObj val = SCM_CDAR(headers);
+            const unsigned char *k =
+                (const unsigned char *)Scm_GetStringConst(SCM_SYMBOL_NAME(key));
+            unsigned int l;
+            const unsigned char *v =
+                (const unsigned char *)Scm_GetStringContent(
+                    SCM_STRING(val), &l, NULL, NULL);
+            if (lws_add_http_header_by_name(wsi, k, v, l, p, end)) {
+                Scm_Error("cannot append a HTTP header: %A: %A", key, val);
+            }
+        }
+
+        lws_callback_on_writable(ws->wsi);
+        break;
+    }
     default:
     case LWS_CALLBACK_CLIENT_ESTABLISHED:
     case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
@@ -63,7 +89,8 @@ make_websocket_client(
     const char *path,
     const char *host,
     const char *origin,
-    ScmObj callback)
+    ScmObj callback,
+    ScmObj headers)
 {
     gwebsocket_client *result =
         (gwebsocket_client *)malloc(sizeof(gwebsocket_client));
@@ -106,8 +133,9 @@ make_websocket_client(
     result->ccinfo.host = host;
     result->ccinfo.origin = origin;
 
-    Scm_ForeignPointerAttrSet(
-        SCM_FOREIGN_POINTER(WSCLIENT_BOX(result)), callback_sym, callback);
+    ScmForeignPointer *ws = SCM_FOREIGN_POINTER(WSCLIENT_BOX(result));
+    Scm_ForeignPointerAttrSet(ws, callback_sym, callback);
+    Scm_ForeignPointerAttrSet(ws, headers_sym, headers);
 
     return result;
 }
@@ -126,8 +154,6 @@ gwebsocket_client_connect(gwebsocket_client *ws)
     if (ws->wsi == NULL) {
         Scm_Error("connection error: %A", WSCLIENT_BOX(ws));
     }
-
-    lws_callback_on_writable(ws->wsi);
 }
 
 int
@@ -209,6 +235,7 @@ Scm_Init_websocket(void)
     mod = SCM_MODULE(SCM_FIND_MODULE("libwebsockets", TRUE));
 
     callback_sym = SCM_INTERN("calback");
+    headers_sym = SCM_INTERN("headers");
 
     WsClientClass = Scm_MakeForeignPointerClass(
         mod,

@@ -31,7 +31,8 @@ gwebsocket_client *make_websocket_client(
     const char *path,
     const char *host,
     const char *origin,
-    ScmObj callback);
+    ScmObj callback,
+    ScmObj headers);
 
 void gwebsocket_client_connect(gwebsocket_client *ws);
 
